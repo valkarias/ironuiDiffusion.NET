@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public class CpuBackend : IBackend
 {
     #region Properties & Fields

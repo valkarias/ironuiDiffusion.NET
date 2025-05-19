@@ -1,6 +1,6 @@
-﻿namespace StableDiffusion.NET;
+namespace StableDiffusion.NET;
 
 public interface IDiffusionModelBuilder
 {
-    IDiffusionModelParameter Parameter { get; }
+	IDiffusionModelParameter Parameter { get; }
 }

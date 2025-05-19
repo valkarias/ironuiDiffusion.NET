@@ -2,7 +2,7 @@
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public sealed class UpscaleModelParameter : IQuantizedModelParameter
 {
     /// <summary>

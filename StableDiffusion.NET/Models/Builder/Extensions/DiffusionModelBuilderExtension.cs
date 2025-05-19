@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public static class DiffusionModelBuilderExtension
 {
     public static T WithVae<T>(this T builder, string vaePath)

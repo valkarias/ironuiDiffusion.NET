@@ -22,6 +22,13 @@ public static class DiffusionParameterExtension
         return parameter;
     }
 
+    public static DiffusionParameter WithBatchCount(this DiffusionParameter parameter, int count)
+    {
+        parameter.BatchCount = count;
+
+        return parameter;
+    }
+
     public static DiffusionParameter WithSteps(this DiffusionParameter parameter, int steps)
     {
         parameter.SampleSteps = steps;

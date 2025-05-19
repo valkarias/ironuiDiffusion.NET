@@ -1,4 +1,4 @@
-﻿using HPPH;
+using HPPH;
 using System;
 using System.Runtime.InteropServices;
 
@@ -6,39 +6,56 @@ namespace StableDiffusion.NET;
 
 internal static class ImageHelper
 {
-    public static unsafe Image<ColorRGB> ToImage(Native.sd_image_t* sdImage)
-    {
-        Image<ColorRGB> image = ToImage(*sdImage);
+	public static unsafe Image<ColorRGB>[] ToImages(Native.sd_image_t* sdImages, int count) {
+		var converted = new Image<ColorRGB>[count];
 
-        Marshal.FreeHGlobal((nint)sdImage);
+		for (int i = 0; i < count; i++) {
 
-        return image;
-    }
+			Native.sd_image_t* sd_image = sdImages + i;
+			if (sd_image == null) {
+				converted[i] = null;
+				continue;
+			}
 
-    public static unsafe Image<ColorRGB> ToImage(Native.sd_image_t sdImage)
-    {
-        int width = (int)sdImage.width;
-        int height = (int)sdImage.height;
-        int bpp = (int)sdImage.channel;
+ 			Image<ColorRGB> img = ImageHelper.ToImage(sd_image);
+			converted[i] = img;
+		}
 
-        Image<ColorRGB> image = Image<ColorRGB>.Create(new ReadOnlySpan<byte>(sdImage.data, width * height * bpp), width, height, width * bpp);
+		return converted;
+	}
 
-        Dispose(sdImage);
+	public static unsafe Image<ColorRGB> ToImage(Native.sd_image_t* sdImage) {
+		Image<ColorRGB> image = ToImage(*sdImage);
 
-        return image;
-    }
+		Marshal.FreeHGlobal((nint)sdImage);
 
-    public static unsafe void Dispose(Native.sd_image_t image)
-    {
-        Marshal.FreeHGlobal((nint)image.data);
-    }
+		return image;
+	}
 
-    public static unsafe Native.sd_image_t ToSdImage(this IImage<ColorRGB> image, byte* pinnedReference)
-        => new()
-        {
-            width = (uint)image.Width,
-            height = (uint)image.Height,
-            channel = (uint)image.ColorFormat.BytesPerPixel,
-            data = pinnedReference
-        };
+	public static unsafe Image<ColorRGB> ToImage(Native.sd_image_t sdImage)
+	{
+		int width = (int)sdImage.width;
+		int height = (int)sdImage.height;
+		int bpp = (int)sdImage.channel;
+
+		Image<ColorRGB> image = Image<ColorRGB>.Create(new ReadOnlySpan<byte>(sdImage.data, width * height * bpp), width, height, width * bpp);
+
+		Dispose(sdImage);
+
+		return image;
+	}
+
+	public static unsafe void Dispose(Native.sd_image_t image)
+	{
+		Marshal.FreeHGlobal((nint)image.data);
+	}
+
+	public static unsafe Native.sd_image_t ToSdImage(this IImage<ColorRGB> image, byte* pinnedReference)
+		=> new()
+		{
+			width = (uint)image.Width,
+			height = (uint)image.Height,
+			channel = (uint)image.ColorFormat.BytesPerPixel,
+			data = pinnedReference
+		};
 }

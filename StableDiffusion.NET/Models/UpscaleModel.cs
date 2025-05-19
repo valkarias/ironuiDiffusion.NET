@@ -4,7 +4,7 @@ using System;
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public sealed unsafe class UpscaleModel : IDisposable
 {
     #region Properties & Fields

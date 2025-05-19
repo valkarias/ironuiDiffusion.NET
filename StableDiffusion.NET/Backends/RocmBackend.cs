@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public partial class RocmBackend : IBackend
 {
     #region Properties & Fields

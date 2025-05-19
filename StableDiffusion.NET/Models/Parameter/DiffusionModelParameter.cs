@@ -33,7 +33,7 @@ public sealed class DiffusionModelParameter : IDiffusionModelParameter, IQuantiz
     /// number of threads to use during computation (default: -1)
     /// If threads = -1, then threads will be set to the number of CPU physical cores
     /// </summary>
-    public int ThreadCount { get; set; } = 1;
+    public int ThreadCount { get; set; } = -1;
 
     /// <summary>
     /// 

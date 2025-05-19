@@ -9,7 +9,7 @@ using JetBrains.Annotations;
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public partial class CudaBackend : IBackend
 {
     #region Constants

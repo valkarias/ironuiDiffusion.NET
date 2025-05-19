@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public class SyclBackend : IBackend
 {
     #region Properties & Fields

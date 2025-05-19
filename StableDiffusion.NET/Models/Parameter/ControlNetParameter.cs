@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public sealed class ControlNetParameter
 {
     public bool IsEnabled => Image != null;

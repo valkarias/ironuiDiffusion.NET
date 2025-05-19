@@ -1,31 +1,31 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public sealed class StableDiffusionModelBuilder : IDiffusionModelBuilder, IQuantizedModelBuilder, IPhotomakerModelBuilder
 {
-    #region Properties & Fields
+	#region Properties & Fields
 
-    public DiffusionModelParameter Parameter { get; }
-    IDiffusionModelParameter IDiffusionModelBuilder.Parameter => Parameter;
-    IQuantizedModelParameter IQuantizedModelBuilder.Parameter => Parameter;
-    IPhotomakerModelParameter IPhotomakerModelBuilder.Parameter => Parameter;
+	public DiffusionModelParameter Parameter { get; }
+	IDiffusionModelParameter IDiffusionModelBuilder.Parameter => Parameter;
+	IQuantizedModelParameter IQuantizedModelBuilder.Parameter => Parameter;
+	IPhotomakerModelParameter IPhotomakerModelBuilder.Parameter => Parameter;
 
-    #endregion
+	#endregion
 
-    #region Constructors
+	#region Constructors
 
-    public StableDiffusionModelBuilder(string modelPath)
-    {
-        Parameter = new DiffusionModelParameter { DiffusionModelType = DiffusionModelType.StableDiffusion, ModelPath = modelPath };
-    }
+	public StableDiffusionModelBuilder(string modelPath)
+	{
+		Parameter = new DiffusionModelParameter { DiffusionModelType = DiffusionModelType.StableDiffusion, ModelPath = modelPath };
+	}
 
-    #endregion
+	#endregion
 
-    #region Methods
+	#region Methods
 
-    public DiffusionModel Build() => new(Parameter);
+	public DiffusionModel Build() => new(Parameter);
 
-    #endregion
+	#endregion
 }

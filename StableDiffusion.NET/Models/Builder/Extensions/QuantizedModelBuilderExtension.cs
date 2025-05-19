@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public static class QuantizedModelBuilderExtension
 {
     public static T WithoutMultithreading<T>(this T builder)

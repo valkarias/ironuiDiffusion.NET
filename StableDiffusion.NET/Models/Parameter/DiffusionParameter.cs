@@ -2,13 +2,13 @@
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public sealed class DiffusionParameter
 {
     #region Properties & Fields
 
-    public static DiffusionParameter SD1Default => new() { Width = 512, Height = 512, CfgScale = 7.5f, Guidance = 1f, SampleSteps = 25, SampleMethod = Sampler.Euler_A };
-    public static DiffusionParameter SDXLDefault => new() { Width = 1024, Height = 1024, CfgScale = 7f, Guidance = 1f, SampleSteps = 30, SampleMethod = Sampler.Euler_A };
+    public static DiffusionParameter SD1Default => new() { Width = 512, Height = 512, CfgScale = 7.5f, Guidance = 1f, SampleSteps = 25, BatchCount = 1, SampleMethod = Sampler.Euler_A };
+    public static DiffusionParameter SDXLDefault => new() { Width = 1024, Height = 1024, CfgScale = 7f, Guidance = 1f, SampleSteps = 30, BatchCount = 1, SampleMethod = Sampler.Euler_A };
     public static DiffusionParameter SD3_5Default => new() { Width = 1024, Height = 1024, CfgScale = 4.5f, Guidance = 1f, SampleSteps = 20, SampleMethod = Sampler.Euler };
     public static DiffusionParameter FluxDefault => new() { Width = 1024, Height = 1024, CfgScale = 1, Guidance = 3.5f, SampleSteps = 20, SampleMethod = Sampler.Euler };
 
@@ -36,6 +36,11 @@ public sealed class DiffusionParameter
     /// number of sample steps (default: 25)
     /// </summary>
     public int SampleSteps { get; set; } = 25;
+
+    /// <summary>
+    /// bacth count (default: 1)
+    /// </summary>
+    public int BatchCount { get; set; } = 1;
 
     /// <summary>
     /// RNG seed. use -1 for a random seed (default: -1)

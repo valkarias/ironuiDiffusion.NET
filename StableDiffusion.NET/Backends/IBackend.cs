@@ -2,7 +2,7 @@
 
 namespace StableDiffusion.NET;
 
-[PublicAPI]
+
 public interface IBackend
 {
     bool IsEnabled { get; set; }
