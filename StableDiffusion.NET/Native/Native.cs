@@ -4,6 +4,7 @@
 // ReSharper disable ArrangeTypeMemberModifiers
 
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using System;
 
 namespace StableDiffusion.NET;
@@ -35,14 +36,16 @@ internal unsafe partial class Native
 	internal struct shared_data_t;
 	internal struct upscaler_ctx_t;
 
-	internal struct _AutoEncoderKL;
-	internal struct _Conditioner;
-
 	[StructLayout(LayoutKind.Sequential)]
-	internal struct API_ModelComponents
+	internal struct extra_inference_parameters 
 	{
-		public _AutoEncoderKL* first_stage_model; // Pointer to AutoEncoderKL
-		public _Conditioner* cond_stage_model; // Pointer to Conditioner
+		[MarshalAs(UnmanagedType.I1)]  // Use U1 for bool
+		internal bool return_latents;
+		
+		internal int init_latent_index;
+		internal int init_key;
+		
+		internal TensorType init_type;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -54,37 +57,17 @@ internal unsafe partial class Native
 		internal byte* data;
 	}
 
-	[StructLayout(LayoutKind.Sequential)]
-	internal struct API_TensorArray
-	{
-		public API_Tensor** data;
-		public nint count;
-
-		public Span<IntPtr> Data() {
-			return new Span<IntPtr>(data, (int)count);
-		}
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-	internal struct API_Tensor
-	{
-		public IntPtr tensor; // Pointer to the native tensor
-		public IntPtr data;
-		public int size; // Size of the tensor
-	}
-
-
 	[LibraryImport(LIB_NAME, EntryPoint = "get_num_physical_cores")]
 	internal static partial int get_num_physical_cores();
 
 	[LibraryImport(LIB_NAME, EntryPoint = "sd_get_system_info")]
 	internal static partial void* sd_get_system_info();
 
-	[LibraryImport(LIB_NAME, EntryPoint = "create_shared_data")]
-	internal static partial shared_data_t* create_shared_data();
 
+	//TODO: organize imports
+	//maybe separate by shared, sd
 	[LibraryImport(LIB_NAME, EntryPoint = "new_sd_ctx")]
-	internal static partial sd_ctx_t* new_sd_ctx(shared_data_t* shared_data,
+	internal static partial sd_ctx_t* new_sd_ctx(
 												 [MarshalAs(UnmanagedType.LPStr)] string model_path,
 												 [MarshalAs(UnmanagedType.LPStr)] string clip_l_path,
 												 [MarshalAs(UnmanagedType.LPStr)] string clip_g_path,
@@ -109,27 +92,24 @@ internal unsafe partial class Native
 												 [MarshalAs(UnmanagedType.I1)] bool diffusion_flash_attn);
 
 	[LibraryImport(LIB_NAME, EntryPoint = "free_shared_data")]
-	internal static partial void free_shared_data(shared_data_t* shared);
+	internal static partial void free_shared_data();
 
 	[LibraryImport(LIB_NAME, EntryPoint = "free_sd_ctx")]
 	internal static partial void free_sd_ctx(sd_ctx_t* sd_ctx);
 
-	[LibraryImport(LIB_NAME, EntryPoint = "get_model_components", StringMarshalling = StringMarshalling.Utf8)]
-	internal static partial API_ModelComponents* get_model_components(sd_ctx_t* sd_ctx);
-
-	[LibraryImport(LIB_NAME, EntryPoint = "free_model_components")]
-	internal static partial void free_model_components(API_ModelComponents* components);
-
-	[LibraryImport(LIB_NAME, EntryPoint = "convert_to_image")]
-	internal static partial sd_image_t* convert_to_image(shared_data_t* shared, API_TensorArray latents, int width, int height, int count);
+	[LibraryImport(LIB_NAME, EntryPoint = "create_images")]
+	internal static partial sd_image_t* create_images(int width, int height);
   
 	[LibraryImport(LIB_NAME, EntryPoint = "vae_process")]
 	[return: MarshalAs(UnmanagedType.I1)]
-	internal static partial bool vae_process(shared_data_t* shared, sd_ctx_t* sd_ctx, API_TensorArray latents, nint count, [MarshalAs(UnmanagedType.I1)] bool decode);
+	internal static partial bool vae_process(sd_ctx_t* sd_ctx, int key, [MarshalAs(UnmanagedType.I1)] bool decode);
+
+	[LibraryImport(LIB_NAME, EntryPoint = "convert_to_tensors")]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal static partial bool convert_to_tensors(byte** images, int width, int height, int count);
 
 	[LibraryImport(LIB_NAME, EntryPoint = "txt2img")]
 	internal static partial sd_image_t* txt2img(sd_ctx_t* sd_ctx,
-												shared_data_t* shared_data,
 												[MarshalAs(UnmanagedType.LPStr)] string prompt,
 												[MarshalAs(UnmanagedType.LPStr)] string negative_prompt,
 												int clip_skip,
@@ -147,13 +127,13 @@ internal unsafe partial class Native
 												float style_strength,
 												[MarshalAs(UnmanagedType.I1)] bool normalize_input,
 												[MarshalAs(UnmanagedType.LPStr)] string input_id_images_path,
+												extra_inference_parameters* _extra,
+												//default
 												int[] skip_layers,
 												int skip_layers_count,
 												float slg_scale,
 												float skip_layer_start,
-												float skip_layer_end,
-												[MarshalAs(UnmanagedType.I1)] bool latents_only = false,
-												void* init_latent = default);
+												float skip_layer_end);
 
 	[LibraryImport(LIB_NAME, EntryPoint = "img2img")]
 	internal static partial sd_image_t* img2img(sd_ctx_t* sd_ctx,
@@ -233,21 +213,21 @@ internal unsafe partial class Native
 	[LibraryImport(LIB_NAME, EntryPoint = "sd_set_progress_callback")]
 	internal static partial void sd_set_progress_callback(sd_progress_cb_t cb, void* data);
 
-	[LibraryImport(LIB_NAME, EntryPoint = "set_context_key")]
-	internal static partial void set_context_key(shared_data_t* shared, [MarshalAs(UnmanagedType.LPStr)] string key);
+	[LibraryImport(LIB_NAME, EntryPoint = "set_shared_context_key")]
+	internal static partial void set_shared_context_key(int key);
 
-	[LibraryImport(LIB_NAME, EntryPoint = "get_context_key")]
-	[return: MarshalAs(UnmanagedType.LPStr)]
-	internal static partial string get_context_key(shared_data_t* shared);
-
-	[LibraryImport(LIB_NAME, EntryPoint = "get_tensors")]
-	internal static partial API_TensorArray get_tensors(shared_data_t* shared, [MarshalAs(UnmanagedType.LPStr)] string context, [MarshalAs(UnmanagedType.LPStr)] string type);
+	[LibraryImport(LIB_NAME, EntryPoint = "get_shared_context_key")]
+	internal static partial int get_shared_context_key();
 
 	[LibraryImport(LIB_NAME, EntryPoint = "clean_tensors")]
-	internal static partial void clean_tensors(shared_data_t* shared, [MarshalAs(UnmanagedType.LPStr)] string context, [MarshalAs(UnmanagedType.LPStr)] string type);
+	internal static partial void clean_tensors(int key, TensorType type);
+
+	[LibraryImport(LIB_NAME, EntryPoint = "clean_shared")]
+	internal static partial void clean_shared();
+
 
 	[LibraryImport(LIB_NAME, EntryPoint = "create_empty_latent")]
-	internal static partial API_Tensor* create_empty_latent(shared_data_t* shared, int width, int height, int channels, int batch_count);
+	internal static partial int create_empty_latent(int width, int height, int channels, int batch_count);
 
 	#endregion
 }

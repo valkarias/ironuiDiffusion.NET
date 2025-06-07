@@ -1,6 +1,8 @@
 using System;
-using HPPH;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
+
+using HPPH;
 using JetBrains.Annotations;
 
 namespace StableDiffusion.NET;
@@ -13,20 +15,10 @@ public sealed unsafe class DiffusionModel : IDisposable
 
 	public DiffusionModelParameter ModelParameter { get; }
 
-	private Native.API_ModelComponents* _nativeComponents;
-	public ModelComponents components;
-
 	private Native.sd_ctx_t* _ctx;
-	private Shared _shared;
 	#endregion
 
 	#region Constructors
-
-	public void setShared(Shared shared)
-	{
-		ArgumentNullException.ThrowIfNull(shared, nameof(shared));
-		_shared = shared;
-	}
 
 	public DiffusionModel(DiffusionModelParameter modelParameter)
 	{
@@ -45,7 +37,7 @@ public sealed unsafe class DiffusionModel : IDisposable
 
 	public void Initialize() {
 
-		_ctx = Native.new_sd_ctx(_shared._getSharedData(),
+		_ctx = Native.new_sd_ctx(
 								 ModelParameter.ModelPath,
 								 ModelParameter.ClipLPath,
 								 ModelParameter.ClipGPath,
@@ -69,32 +61,10 @@ public sealed unsafe class DiffusionModel : IDisposable
 								 ModelParameter.KeepVaeOnCPU,
 								 ModelParameter.FlashAttention);
 
-		if (_shared == null) throw new NullReferenceException("Failed to initialize shared data.");
 		if (_ctx == null) throw new NullReferenceException("Failed to initialize diffusion-model.");
-
-		components = createComponents(_ctx);
 	}
 
-	internal ModelComponents createComponents(Native.sd_ctx_t* ctx) {
-		_nativeComponents = Native.get_model_components(ctx);
-
-		var vae = _nativeComponents->first_stage_model;
-		var clip = _nativeComponents->cond_stage_model;
-
-		// Validate the native components
-		if (vae == null)
-			throw new NullReferenceException("VAE component is null.");
-		else if (clip == null)
-			throw new NullReferenceException("CLIP component is null.");
-		
-		return new ModelComponents(
-			new AutoEncoderKL(vae),
-			new Conditioner(clip)
-		);
-	}
-
-	public DiffusionParameter GetDefaultParameter() => ModelParameter.DiffusionModelType switch
-	{
+	public DiffusionParameter GetDefaultParameter() => ModelParameter.DiffusionModelType switch {
 		DiffusionModelType.None => new DiffusionParameter(),
 		DiffusionModelType.StableDiffusion => DiffusionParameter.SDXLDefault,
 		// DiffusionModelType.Flux => DiffusionParameter.FluxDefault,
@@ -102,19 +72,26 @@ public sealed unsafe class DiffusionModel : IDisposable
 	};
 
 
-	public bool vaeProcess(TensorArray latents, bool decode) {
+	public bool vaeProcess(int key, bool decode) {
 		ObjectDisposedException.ThrowIf(_disposed, this);
-
-		return Native.vae_process(_shared._getSharedData(), _ctx, latents._getNativeArray(), latents.Count, decode);
+		return Native.vae_process(_ctx, key, decode);
 	}
 
-	public IImage<ColorRGB> TextToImage(string prompt, Tensor? init_latent, DiffusionParameter? parameter = null, bool latents_only=false)
+	public IImage<ColorRGB> TextToImage(string prompt, ExtraInferenceParameters extra, DiffusionParameter? parameter = null)
 	{
-		parameter ??= GetDefaultParameter();
-
 		ObjectDisposedException.ThrowIf(_disposed, this);
 		ArgumentNullException.ThrowIfNull(prompt);
+		ArgumentNullException.ThrowIfNull(extra);
 
+		Native.extra_inference_parameters extra_params = new Native.extra_inference_parameters();
+		extra_params.return_latents = extra.returnLatents;
+		extra_params.init_latent_index = extra.initialIndex;
+		extra_params.init_type = extra.initialType;
+		extra_params.init_key = extra.initialKey;
+
+		Native.extra_inference_parameters* _extra = &extra_params;
+
+		parameter ??= GetDefaultParameter();
 		parameter.Validate();
 
 		Native.sd_image_t* result = null;
@@ -143,7 +120,6 @@ public sealed unsafe class DiffusionModel : IDisposable
 					};
 
 					result = Native.txt2img(_ctx,
-											_shared._getSharedData(),
 											prompt,
 											parameter.NegativePrompt,
 											parameter.ClipSkip,
@@ -161,13 +137,12 @@ public sealed unsafe class DiffusionModel : IDisposable
 											parameter.PhotoMaker.StyleRatio,
 											parameter.PhotoMaker.NormalizeInput,
 											parameter.PhotoMaker.InputIdImageDirectory,
+											_extra,
 											parameter.SkipLayers,
 											parameter.SkipLayers.Length,
 											parameter.SlgScale,
 											parameter.SkipLayerStart,
-											parameter.SkipLayerEnd,
-											latents_only,
-											init_latent._getNativeTensor());
+											parameter.SkipLayerEnd);
 
 					Marshal.FreeHGlobal((nint)nativeControlNetImage.data);
 				}
@@ -182,7 +157,6 @@ public sealed unsafe class DiffusionModel : IDisposable
 					};
 
 					result = Native.txt2img(_ctx,
-											_shared._getSharedData(),
 											prompt,
 											parameter.NegativePrompt,
 											parameter.ClipSkip,
@@ -200,20 +174,18 @@ public sealed unsafe class DiffusionModel : IDisposable
 											parameter.PhotoMaker.StyleRatio,
 											parameter.PhotoMaker.NormalizeInput,
 											parameter.PhotoMaker.InputIdImageDirectory,
+											_extra,
 											parameter.SkipLayers,
 											parameter.SkipLayers.Length,
 											parameter.SlgScale,
 											parameter.SkipLayerStart,
-											parameter.SkipLayerEnd,
-											latents_only,
-											init_latent._getNativeTensor());
+											parameter.SkipLayerEnd);
 				}
 			}
 		}
 		else
 		{
 			result = Native.txt2img(_ctx,
-									_shared._getSharedData(),
 									prompt,
 									parameter.NegativePrompt,
 									parameter.ClipSkip,
@@ -231,16 +203,15 @@ public sealed unsafe class DiffusionModel : IDisposable
 									parameter.PhotoMaker.StyleRatio,
 									parameter.PhotoMaker.NormalizeInput,
 									parameter.PhotoMaker.InputIdImageDirectory,
+									_extra,
 									parameter.SkipLayers,
 									parameter.SkipLayers.Length,
 									parameter.SlgScale,
 									parameter.SkipLayerStart,
-									parameter.SkipLayerEnd,
-									latents_only,
-									init_latent._getNativeTensor());
+									parameter.SkipLayerEnd);
 		}
 		
-		if (latents_only)
+		if (extra.returnLatents)
 		  return null;
 		return ImageHelper.ToImage(result);
 	}
@@ -449,71 +420,15 @@ public sealed unsafe class DiffusionModel : IDisposable
 		return ImageHelper.ToImage(result);
 	}
 
-	public void Dispose()
-	{
+	public void Dispose() {
 		if (_disposed) return;
 
 		if (_ctx != null)
 			Native.free_sd_ctx(_ctx);
-
-		if (components != null)
-			Native.free_model_components(_nativeComponents);
 
 		GC.SuppressFinalize(this);
 		_disposed = true;
 	}
 
 	#endregion
-}
-
-public sealed unsafe class ModelComponents
-{
-	// VAE
-	public AutoEncoderKL Vae { get; }
-	// CLIP
-	public Conditioner Clip { get; }
-
-	public ModelComponents(AutoEncoderKL vae, Conditioner clip)
-	{
-		Vae = vae;
-		Clip = clip;
-	}
-
-	
-}
-
-public unsafe class AutoEncoderKL
-{
-	private Native._AutoEncoderKL* _nativeStruct;
-
-	internal AutoEncoderKL(Native._AutoEncoderKL* nativeStruct)
-	{
-		Initialize(nativeStruct);
-	}
-
-	private void Initialize(Native._AutoEncoderKL* nativeStruct)
-	{
-		// Initialize the managed struct
-		_nativeStruct = nativeStruct;
-	}
-
-	// Add methods and properties to interact with the native AutoEncoderKL
-}
-
-public unsafe class Conditioner
-{
-	private Native._Conditioner* _nativeStruct;
-
-	internal Conditioner(Native._Conditioner* nativeStruct)
-	{
-		Initialize(nativeStruct);
-	}
-
-	private void Initialize(Native._Conditioner* nativeStruct)
-	{
-		// Initialize the managed struct
-		_nativeStruct = nativeStruct;
-	}
-
-	// Add methods and properties to interact with the native Conditioner
 }
