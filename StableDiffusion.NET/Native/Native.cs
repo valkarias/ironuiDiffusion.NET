@@ -101,12 +101,13 @@ internal unsafe partial class Native
 	internal static partial sd_image_t* create_images(int width, int height);
   
 	[LibraryImport(LIB_NAME, EntryPoint = "vae_process")]
-	[return: MarshalAs(UnmanagedType.I1)]
-	internal static partial bool vae_process(sd_ctx_t* sd_ctx, int key, [MarshalAs(UnmanagedType.I1)] bool decode);
+	internal static partial int vae_process(sd_ctx_t* sd_ctx, int key, [MarshalAs(UnmanagedType.I1)] bool decode);
 
 	[LibraryImport(LIB_NAME, EntryPoint = "convert_to_tensors")]
-	[return: MarshalAs(UnmanagedType.I1)]
-	internal static partial bool convert_to_tensors(byte** images, int width, int height, int count);
+	internal static partial int convert_to_tensors(byte** images, int width, int height, int count);
+
+	[LibraryImport(LIB_NAME, EntryPoint = "convert_mask_to_tensor")]
+	internal static partial int convert_mask_to_tensor(byte* mask, int width, int height);
 
 	[LibraryImport(LIB_NAME, EntryPoint = "txt2img")]
 	internal static partial sd_image_t* txt2img(sd_ctx_t* sd_ctx,
@@ -136,14 +137,16 @@ internal unsafe partial class Native
 												float skip_layer_end);
 
 	[LibraryImport(LIB_NAME, EntryPoint = "img2img")]
-	internal static partial sd_image_t* img2img(sd_ctx_t* sd_ctx,
-												sd_image_t init_image,
-												sd_image_t mask_image,
+	internal static partial int img2img(sd_ctx_t* sd_ctx,
+	         								    int init_key,
+												int init_image_index,
+												int mask_index,
 												[MarshalAs(UnmanagedType.LPStr)] string prompt,
 												[MarshalAs(UnmanagedType.LPStr)] string negative_prompt,
 												int clip_skip,
 												float cfg_scale,
 												float guidance,
+												float eta,
 												int width,
 												int height,
 												sample_method_t sample_method,
@@ -213,8 +216,8 @@ internal unsafe partial class Native
 	[LibraryImport(LIB_NAME, EntryPoint = "sd_set_progress_callback")]
 	internal static partial void sd_set_progress_callback(sd_progress_cb_t cb, void* data);
 
-	[LibraryImport(LIB_NAME, EntryPoint = "set_shared_context_key")]
-	internal static partial void set_shared_context_key(int key);
+	[LibraryImport(LIB_NAME, EntryPoint = "set_shared_context")]
+	internal static partial void set_shared_context(int key);
 
 	[LibraryImport(LIB_NAME, EntryPoint = "get_shared_context_key")]
 	internal static partial int get_shared_context_key();

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://2qhkxw61vwk5"
-path="res://.godot/imported/sd_net_cuda.png-de11a9df6662d78cfd063bba42a584c5.ctex"
+path="res://.godot/imported/sd_net_cuda.png-06d3e6099182a22a495048196e735441.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://libs/StableDiffusion.NET/Backends/sd_net_cuda.png"
-dest_files=["res://.godot/imported/sd_net_cuda.png-de11a9df6662d78cfd063bba42a584c5.ctex"]
+source_file="res://libs/IronuiDiffusion.NET/Backends/sd_net_cuda.png"
+dest_files=["res://.godot/imported/sd_net_cuda.png-06d3e6099182a22a495048196e735441.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ctswxsgq1bwd0"
-path="res://.godot/imported/sd_net_cpu.png-ffba0b262339c547f3116f53f706439f.ctex"
+path="res://.godot/imported/sd_net_cpu.png-cb9f52ce979aab691a4cc6f830cb092f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://libs/StableDiffusion.NET/Backends/sd_net_cpu.png"
-dest_files=["res://.godot/imported/sd_net_cpu.png-ffba0b262339c547f3116f53f706439f.ctex"]
+source_file="res://libs/IronuiDiffusion.NET/Backends/sd_net_cpu.png"
+dest_files=["res://.godot/imported/sd_net_cpu.png-cb9f52ce979aab691a4cc6f830cb092f.ctex"]
 
 [params]
 

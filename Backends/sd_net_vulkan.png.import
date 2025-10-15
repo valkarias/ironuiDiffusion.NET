@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cjuscty7bqcao"
-path="res://.godot/imported/sd_net_vulkan.png-77ad25dc6fedd32a80440fd4c24ccacd.ctex"
+path="res://.godot/imported/sd_net_vulkan.png-5fea133b543d96ab4394174d9a7e2ec9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://libs/StableDiffusion.NET/Backends/sd_net_vulkan.png"
-dest_files=["res://.godot/imported/sd_net_vulkan.png-77ad25dc6fedd32a80440fd4c24ccacd.ctex"]
+source_file="res://libs/IronuiDiffusion.NET/Backends/sd_net_vulkan.png"
+dest_files=["res://.godot/imported/sd_net_vulkan.png-5fea133b543d96ab4394174d9a7e2ec9.ctex"]
 
 [params]
 

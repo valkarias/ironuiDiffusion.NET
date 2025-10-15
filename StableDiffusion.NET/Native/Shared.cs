@@ -17,9 +17,9 @@ public sealed unsafe class Shared {
 	internal Shared() {
 	}
 
-	internal void setContextKey(int key) {
+	internal void setContext(int key) {
 		_contextKey = key;
-		Native.set_shared_context_key(key);
+		Native.set_shared_context(key);
 	}
 
 	internal int getContextkey() {
@@ -31,9 +31,29 @@ public sealed unsafe class Shared {
 		return ImageHelper.ToImages(images, batch);
 	}
 
-	internal bool convert_to_tensors(byte[][] imageData, int width, int height, int batch) {
+	internal int convertMaskToTensor(byte[] mask, int width, int height) {
+		if (mask == null)
+			return Constants.EMPTY_INDEX;
+
+		var handle = new GCHandle();
+		var pointer = new IntPtr();
+
+		try {
+			handle = GCHandle.Alloc(mask, GCHandleType.Pinned);
+			pointer = handle.AddrOfPinnedObject();
+			return Native.convert_mask_to_tensor((byte*)pointer, width, height);
+		}
+		finally {
+			handle.Free();
+		}
+
+		// c#
+		return Constants.EMPTY_INDEX;
+	}
+
+	internal int convertToTensors(byte[][] imageData, int width, int height, int batch) {
 		if (imageData.Length == 0)
-			return false;
+			return Constants.EMPTY_INDEX;
 
 		var handles = new GCHandle[imageData.Length];
 		var pointers = new IntPtr[imageData.Length];
@@ -47,8 +67,9 @@ public sealed unsafe class Shared {
 			fixed (IntPtr* ptr = pointers) {
 				return Native.convert_to_tensors((byte**)ptr, width, height, imageData.Length);
 			}
-		}
-		finally {
+		} catch (Exception e) {
+			throw e;
+		} finally {
 			for (int i = 0; i < handles.Length; i++) {
 				if (handles[i].IsAllocated)
 					handles[i].Free();
@@ -56,7 +77,7 @@ public sealed unsafe class Shared {
 		}
 
 		// c#
-		return true;
+		return Constants.EMPTY_INDEX;
 	}
 
 	//tensor + index
